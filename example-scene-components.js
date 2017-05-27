@@ -66,216 +66,23 @@ Declare_Any_Class( "Example_Animation",  // An example of a Scene_Component that
 Declare_Any_Class( "Bee_Scene",  // An example of drawing a hierarchical object using a "model_transform" matrix and post-multiplication.
   { 'construct'( context )
       { var shapes = { "box" : new        Cube(), 
-                       "ball": new Grid_Sphere( 10, 10 ) 
-                      //  "melmel": new MelMel() 
+                       "ball": new Grid_Sphere( 10, 10 ), 
+                       "cyl" : new Capped_Cylinder( 10, 10 ),
+                       "triangle" : new Triangle(),
+                       "cone" : new Closed_Cone( 10, 10 ),
                       };
         this.submit_shapes( context, shapes );
         
         this.define_data_members( { purple_clay: context.shaders_in_use["Phong_Model"].material( Color( .9,.5,.9, 0.8 ), .4, .4, .8, 40 ),
-                                     green_clay: context.shaders_in_use["Phong_Model"].material( Color( .5, .65, .35, 0.9 ), 1, 1,  1, 40 ),
-                                     pink_clay: context.shaders_in_use["Phong_Model"].material( Color( 1, 0.35, 0.8, 0.7 ), 1, 2,  1, 40 ) } );
+                                    green_clay: context.shaders_in_use["Phong_Model"].material( Color( .5, .65, .35, 0.9 ), 1, 1,  1, 40 ),
+                                    pink_clay: context.shaders_in_use["Phong_Model"].material( Color( 1, 0.35, 0.8, 0.7 ), 1, 2,  1, 40 ),
+                                    white_clay: context.shaders_in_use["Phong_Model"].material( Color( 1, 1, 1, 1 ), 1, 1,  1, 40 ),
+                                    red_clay: context.shaders_in_use["Phong_Model"].material( Color( 1, 0, 0, 1 ), 1, 1,  1, 40 ),
+                                    olive_clay: context.shaders_in_use["Phong_Model"].material( Color( 0.23, 0.39, 0.30, 1 ), 1, 1,  1, 40 ),
+                                    black_clay: context.shaders_in_use["Phong_Model"].material( Color( 0, 0, 0, 1 ), 1, 2,  1, 40 ) } );
       },
 
-    'drawBee' ( model_transform, graphics_state ) {
 
-          const SCALE_BODY_X = 2;
-          const SCALE_BODY_Y = 1;
-          const SCALE_BODY_Z = 1;
-
-          // set movement 
-          var beeBody = model_transform;
-          var beeMove = graphics_state.animation_time/1000;
-          
-          //draw bee body
-
-          beeBody = mult(beeBody, rotation(-15*beeMove, 0, 1, 0));
-          beeBody = mult(beeBody, translation(15,Math.sin(beeMove*5),15));
-          //beeBody = mult(beeBody, translation((-15*Math.sin(beeMove)),Math.sin(beeMove*5),(15*Math.cos(beeMove))));
-          beeBody = mult(beeBody, rotation(90, 0, 1, 0));
-
-          beeBody = mult(beeBody, scale(SCALE_BODY_X,SCALE_BODY_Y,SCALE_BODY_Z));
-          this.shapes.box.draw(graphics_state, beeBody, this.purple_clay);
-
-          // draw bee head
-          var beeHead = beeBody;
-          beeHead = mult(beeHead, scale((1/SCALE_BODY_X),1,1));
-          beeHead = mult(beeHead, translation(-SCALE_BODY_X-1,0,0));
-          this.shapes.ball.draw(graphics_state, beeHead, this.pink_clay);
-
-          // draw bee bottom
-          var beeBott = beeBody;
-          beeBott = mult(beeBott, translation(SCALE_BODY_X,0,0));
-          this.shapes.ball.draw(graphics_state, beeBott, this.pink_clay);
-          
-          // draw wings
-          var beeWing = beeBody;
-          var span = 2;
-          var fly = beeMove*100;
-
-          beeWing = this.drawWings(beeBody, graphics_state, SCALE_BODY_Y, SCALE_BODY_Z, span, fly, 1); // left wing
-          beeWing = this.drawWings(beeBody, graphics_state, SCALE_BODY_Y, SCALE_BODY_Z, span, -fly, -1); // right wing
-
-          // draw legs
-          var beeLeg = beeBody;
-          var bS = 0.5;
-
-          // middle legs (right then left)
-          beeLeg = this.drawLegs(beeBody, graphics_state, 0, SCALE_BODY_Y, SCALE_BODY_Z, bS, fly, 1);  
-          beeLeg = this.drawLegs(beeBody, graphics_state, 0, SCALE_BODY_Y, SCALE_BODY_Z, bS, -fly, -1);
-
-          // front legs (right then left)
-          beeLeg = this.drawLegs(beeBody, graphics_state, -0.5, SCALE_BODY_Y, SCALE_BODY_Z, bS, fly, 1);  
-          beeLeg = this.drawLegs(beeBody, graphics_state, -0.5, SCALE_BODY_Y, SCALE_BODY_Z, bS, -fly, -1);
-
-          // back legs (right then left)
-          beeLeg = this.drawLegs(beeBody, graphics_state, 0.5, SCALE_BODY_Y, SCALE_BODY_Z, bS, fly, 1);  
-          beeLeg = this.drawLegs(beeBody, graphics_state, 0.5, SCALE_BODY_Y, SCALE_BODY_Z, bS, -fly, -1);
-
-          return beeBody;
-        }, 
-
-        'drawWings' (model_transform, graphics_state, bodyY, bodyZ, wingSpan, move, side) {
-          var beeW = model_transform;
-          var wingHeight = 0.1;
-
-          // position pivot point 
-          beeW = mult(beeW, translation(0, bodyY, side*bodyZ));
-
-          // wing flap movement
-          beeW = mult(beeW, rotation(10*Math.sin(move/10), 1, 0, 0)); 
-
-          // draw wings
-          beeW = mult(beeW, translation(0, wingHeight, side*wingSpan));
-          beeW = mult(beeW, scale(0.5,wingHeight,wingSpan));
-          this.shapes.box.draw(graphics_state, beeW, this.pink_clay);
-
-          return beeW;
-        }, 
-
-
-        'drawLegs' (model_transform, graphics_state, legXcoord, bodyY, bodyZ, legL, move, side) {
-          var beeL1 = model_transform;
-          var bee2 = model_transform;
-          var legW = 0.1;
-
-          // readjustment of pivot points
-          beeL1 = mult(beeL1, translation(legXcoord, -bodyY, side*bodyZ));
-          beeL2 = mult(beeL1, translation(legXcoord, -bodyY, side*legW));
-
-          // movement of limbs
-          beeL1 = mult(beeL1, rotation(25*Math.sin(move/50), 1, 0, 0));
-          var holder = beeL1;
-
-          // translations of centerpoint of shapes
-          beeL1 = mult(beeL1, translation(0, -legL, side*legW));
-
-          // sizing and drawing primary
-          beeL1 = mult(beeL1, scale(legW,legL,legW));
-          this.shapes.box.draw(graphics_state, beeL1, this.pink_clay);
-          
-          // putting second limb into primary limb coordinate system
-          beeL2 = holder;
-          beeL2 = mult(beeL2, translation(0, -bodyY, 0));
-          beeL2 = mult(beeL2, rotation(50*Math.sin(move/50), 1, 0, 0));
-          beeL2 = mult(beeL2, translation(0, -legL, side*legW));
-
-          // sizing and drawing second limb
-          beeL2 = mult(beeL2, scale(legW, legL, legW));
-          this.shapes.box.draw(graphics_state, beeL2, this.purple_clay);
-
-
-          return model_transform;
-        },
-
-      /*  'whatevs' ( model_transform, graphics_state ) {
-
-          var x = model_transform;
-
-          x = mult(x, scale(1,1,10));
-          x = mult(x, translation(0,-75,0));
-          this.shapes.melmel.draw(graphics_state, x, this.green_clay);
-
-          return x;
-        }, */
-
-      'drawGround' ( model_transform, graphics_state ) {
-
-          var ground = model_transform;
-
-          ground = mult(ground, scale(1000,0.1,1000));
-          ground = mult(ground, translation(0,-100,0));
-          this.shapes.box.draw(graphics_state, ground, this.green_clay);
-
-          return ground;
-        }, 
-
-        'drawTree' ( model_transform, graphics_state) {
-
-          var trunk = model_transform;
-          var move = graphics_state.animation_time/1000;
-
-          var trunkX = 0.5;
-          var trunkY = 2;
-          var trunkZ = 0.5;
-
-          // translations of centerpoint of rotation (midpoint where it touches the ground)
-          trunk = mult(trunk, translation(0, -10 + 0.05, 0));
-          
-          // trunk sway
-          trunk = mult(trunk, rotation(25*Math.sin(move), 0, 0, 1));
-          var holder = trunk;
-
-          // translation of centerpoint of shape
-          trunk = mult(trunk, translation(0, trunkY , 0));
-
-          // sizing and drawing primary
-          trunk = mult(trunk, scale(trunkX,trunkY,trunkZ));
-          this.shapes.box.draw(graphics_state, trunk, this.pink_clay);
-
-          // draw trunks
-          //trunk = this.drawTSegments(holder, this.pink_clay, trunkX, trunkY, trunkZ. move);
-          
-          var seg = holder;
-
-          for( var i = 0; i < 8; i++ )   {
-
-          // putting second limb into primary limb coordinate system
-          seg = mult(seg, translation(0, 2*trunkY, 0));
-          seg = mult(seg, rotation(10*Math.sin(move),0, 0, 1));
-          // maintain coordinate system for further segments
-          var temp = seg;
-
-          seg = mult(seg, translation(0, trunkY, 0));
-
-          // sizing and drawing second limb
-          seg = mult(seg, scale(trunkX, trunkY, trunkZ));
-          this.shapes.box.draw(graphics_state, seg, this.purple_clay); 
-
-          // pass coordinate system to next segment
-          seg = temp;
-        }
-
-        seg = mult(seg, scale(20,20,20));
-        this.shapes.ball.draw(graphics_state, seg, this.pink_clay);
-          
-        return trunk;
-        },
-
-        'drawTSegments' ( model_transform, graphics_state, x, y, z, sway) {
-
-          var seg = model_transform;
-
-          // putting second limb into primary limb coordinate system
-          seg = mult(seg, translation(0, 1.5*y, 0));
-          seg = mult(seg, rotation(50*Math.sin(sway/50), 1, 0, 0));
-          seg = mult(seg, translation(0, y, 0));
-
-          // sizing and drawing second limb
-          seg = mult(seg, scale(x, y, z));
-          this.shapes.box.draw(graphics_state, seg, this.purple_clay);
-
-          return seg;
-        },
 
 
       'drawStair' (model_transform, graphics_state, stair_num) {
@@ -312,7 +119,7 @@ Declare_Any_Class( "Bee_Scene",  // An example of drawing a hierarchical object 
         layer = this.drawStair(layer, graphics_state, i);
       }
 
-      layer = mult(layer, translation(0, 0, STAIR_WIDTH*2))
+      layer = mult(layer, translation(0, 0, STAIR_WIDTH*2));
 
       for(i = 0; i < NUM_STAIRS; i++) {
 
@@ -323,25 +130,323 @@ Declare_Any_Class( "Bee_Scene",  // An example of drawing a hierarchical object 
       return layer;
     },
 
+    'drawGreedMoney' (model_transform, graphics_state) {
+      const MONEY_X = 0.5;
+      const MONEY_Y = 0.25;
+      const MONEY_Z = 1;
+
+
+      money = model_transform;
+
+      money = mult(money, scale(MONEY_X, MONEY_Y, MONEY_Z));
+      this.shapes.box.draw(graphics_state, money, this.green_clay);
+
+      return money;
+
+    },
+
+    'makeItRain' (model_transform, graphics_state, num) {
+      const HEIGHT = 5;
+
+      var money_rain = model_transform;
+
+      for (i = 0; i < num; i++) {
+        money_rain = model_transform;
+        money_rain = mult(money_rain, translation(0.5*2, (HEIGHT*(i/2))-time*20, 0));
+        this.drawGreedMoney(money_rain, graphics_state);
+      }
+
+      return model_transform;
+    },
+
+    'drawGreedTeeth' (model_transform, graphics_state, midpoint) {
+      const TOOTH_X = 1;
+      const TOOTH_Y = 0.5;
+      const TOOTH_Z = 1.25
+      const TOOTH_GAP = TOOTH_X * 2.2 
+
+      var tooth = model_transform;
+
+      // right
+      for(i = 0; i < 2; i++) {
+        tooth = model_transform;
+        tooth = mult(tooth, translation(midpoint + TOOTH_GAP/2, 0, 0));
+
+        tooth = mult(tooth, scale(TOOTH_X, TOOTH_Y, TOOTH_Z));
+        tooth = mult(tooth, translation(i*TOOTH_GAP, 0, 0));
+        this.shapes.box.draw(graphics_state, tooth, this.white_clay);
+      }
+
+
+      // left
+      for(i = 0; i < 2; i++) {
+        tooth = model_transform;
+        tooth = mult(tooth, translation(midpoint - TOOTH_GAP/2, 0, 0));
+
+        tooth = mult(tooth, scale(TOOTH_X, TOOTH_Y, TOOTH_Z));
+        tooth = mult(tooth, translation(-i*TOOTH_GAP, 0, 0));
+        this.shapes.box.draw(graphics_state, tooth, this.white_clay);
+      }
+
+      return tooth;
+
+    },
+
+    'drawGreedLanding' (model_transform, graphics_state) {
+
+      const MOUTH_X = 10;
+      const MOUTH_Z = 10;
+
+      var mouth = model_transform;
+      time = graphics_state.animation_time/1000;
+      omega = 2;
+      offset = 5
+      mouth = mult(mouth, scale(MOUTH_X, 0.1, MOUTH_Z*Math.cos(time*omega)));
+
+      mouth = mult(mouth, rotation(-90, 1, 0, 0));
+ 
+      this.shapes.cyl.draw(graphics_state, mouth, this.black_clay);
+
+      var top_teeth = model_transform;
+      top_teeth = mult(top_teeth, translation(0, 0, (MOUTH_Z/2)*Math.cos(time*(omega))));
+      this.drawGreedTeeth(top_teeth, graphics_state, MOUTH_X/32);
+
+      var bot_teeth = model_transform;
+      bot_teeth = mult(bot_teeth, translation(0, 0, (-MOUTH_Z/2)*Math.cos(time*(omega))));
+      this.drawGreedTeeth(bot_teeth, graphics_state, MOUTH_X/32);
+
+      //draw money infinitely
+      const NUM_BILLS_PER_STACK = 40;
+      const INIT_HEIGHT = 10;
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(0, INIT_HEIGHT ,0));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(3, INIT_HEIGHT ,0));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(0, INIT_HEIGHT ,0));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(0, INIT_HEIGHT ,3));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(3, INIT_HEIGHT ,3));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(0, INIT_HEIGHT ,3));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(3, INIT_HEIGHT ,3));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(-3, INIT_HEIGHT ,0));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+
+
+      rain_position = model_transform;
+      rain_position = mult(rain_position, translation(0, INIT_HEIGHT ,-3));
+      this.makeItRain(rain_position, graphics_state, NUM_BILLS_PER_STACK);
+      
+
+      return model_transform;
+    },
+
+    'drawBigHeart' (model_transform, graphics_state, color) {
+
+      heart_size = 4;
+
+      heart = model_transform;
+
+      // sphere 1
+      heart = mult(heart, scale(heart_size, heart_size, heart_size));
+      this.shapes.ball.draw(graphics_state, heart, color);
+
+      // sphere 2
+      heart = mult(heart, translation(heart_size/3, 0, 0));
+      this.shapes.ball.draw(graphics_state, heart, color);
+
+      // cone 
+
+      heart = model_transform;
+      heart = mult(heart, rotation(90, 1, 0, 0));
+      heart = mult(heart, scale(heart_size*1.5, heart_size, heart_size*0.8));
+      heart = mult(heart, translation(heart_size/9, 0, heart_size/2.5));
+      this.shapes.cone.draw(graphics_state, heart, color);
+
+      return heart;
+
+    },
+
+    'drawPulsatingHeart' (model_transform, graphics_state, color) {
+
+
+      heart = model_transform;
+      amp = 1/24;
+      time = graphics_state.animation_time/1000;
+      omega = 10;
+      offset = 23/24;
+      func = amp*Math.cos(omega*time) + offset;
+      heart = mult(heart, scale(func, func, func));
+      this.drawBigHeart(heart, graphics_state, color);
+
+      return heart;
+    },
+
+    'drawSmallHeart' (model_transform, graphics_state) {
+
+      heart = model_transform;
+
+      heart = mult(heart, scale(0.25, 0.25, 0.25));
+      this.drawPulsatingHeart(heart, graphics_state, this.red_clay);
+
+      return heart;
+
+    },
+
+    'drawOrbitingHearts' (model_transform, graphics_state) {
+
+      
+      time = graphics_state.animation_time/1000;
+
+
+      heart = model_transform;
+      heart = mult(heart, rotation(100*time + 90, 1, 1, 0));
+      heart = mult(heart, translation(10, 0, 0));
+      heart = mult(heart, rotation(-100*time - 90, 1, 1, 0));
+      this.drawSmallHeart(heart, graphics_state, this.red_clay);
+
+      heart = model_transform;
+      heart = mult(heart, rotation(100*time, 0, 1, 1));
+      heart = mult(heart, translation(10, 0, 0));
+      heart = mult(heart, rotation(-100*time, 0, 1, 1));
+      this.drawSmallHeart(heart, graphics_state, this.red_clay);
+
+      heart = model_transform;
+      heart = mult(heart, rotation(100*time + 45, 1, 1, 1));
+      heart = mult(heart, translation(10, 0, 0));
+      heart = mult(heart, rotation(-100*time - 45, 1, 1, 1));
+      this.drawSmallHeart(heart, graphics_state, this.red_clay);
+
+
+
+    },
+
+
+    'drawLustLanding' (model_transform, graphics_state) {
+
+      
+
+
+
+      this.drawPulsatingHeart(model_transform, graphics_state, this.black_clay);
+
+      this.drawOrbitingHearts(model_transform, graphics_state);
+
+    },
+
+    'drawGoatBody' (model_transform, graphics_state) {
+      goat_body = model_transform;
+
+      goat_body = mult(goat_body, scale(0.5, 0.2, 0.2));
+      this.shapes.box.draw(graphics_state, goat_body, this.white_clay);
+
+    },
+
+    'drawGoatHead' (model_transform, graphics_state) {
+      goat_head = model_transform;
+
+      goat_head = mult(goat_head, translation(0.5, 0, 0));
+      goat_head = mult(goat_head, scale(0.2, 0.1, 0.1));
+      this.shapes.box.draw(graphics_state, goat_head, this.black_clay);
+    },
+
+    'drawGoatLegs' (model_transform, graphics_state) {
+
+      goat_right_front = model_transform;
+      goat_right_front = mult(goat_right_front, translation(0.45, -0.3, 0.15));
+      goat_right_front = mult(goat_right_front, scale(0.02,0.3,0.02));
+      this.shapes.box.draw(graphics_state, goat_right_front, this.black_clay);
+
+      goat_left_front = model_transform;
+      goat_left_front = mult(goat_left_front, translation(0.45, -0.3, -0.15));
+      goat_left_front = mult(goat_left_front, scale(0.02,0.3,0.02));
+      this.shapes.box.draw(graphics_state, goat_left_front, this.black_clay);
+
+      goat_right_back = model_transform;
+      goat_right_back = mult(goat_right_back, translation(-0.45, -0.3, 0.15));
+      goat_right_back = mult(goat_right_back, scale(0.02,0.3,0.02));
+      this.shapes.box.draw(graphics_state, goat_right_back, this.black_clay);
+
+      goat_left_back = model_transform;
+      goat_left_back = mult(goat_left_back, translation(-0.45, -0.3, -0.15));
+      goat_left_back = mult(goat_left_back, scale(0.02,0.3,0.02));
+      this.shapes.box.draw(graphics_state, goat_left_back, this.black_clay);
+    },
+
+    'drawGoatTail' (model_transform, graphics_state) {
+
+      goat_tail = model_transform;
+
+      goat_tail = mult(goat_tail, translation(-0.5, 0, 0));
+      goat_tail = mult(goat_tail, scale(0.1, 0.1, 0.1));
+      this.shapes.box.draw(graphics_state, goat_tail, this.white_clay);
+
+    },
+
+    'drawGoat' (model_transform, graphics_state) {
+
+      this.drawGoatBody(model_transform, graphics_state);
+      this.drawGoatHead(model_transform, graphics_state);
+      this.drawGoatLegs(model_transform, graphics_state);
+      this.drawGoatTail(model_transform, graphics_state);
+    },
+
+    'drawField' (model_transform, graphics_state, reverse) {
+
+      first_field = model_transform;
+
+      first_field = mult(first_field, scale(5, 0.1, 10));
+      this.shapes.box.draw(graphics_state, first_field, this.olive_clay);
+      
+      second_field = mult(first_field, translation(2, 0, 0));
+      this.shapes.box.draw(graphics_state, second_field, this.green_clay);
+    },
+
+    'drawEnvyLanding' (model_transform, graphics_state, reverse) {
+
+      this.drawField(model_transform, graphics_state, reverse);
+
+      goat_one = model_transform;
+      goat_one = mult(goat_one, translation(4, 0.75, 0));
+      this.drawGoat(goat_one, graphics_state);
+    },
+
 
     'display'( graphics_state )
       { 
             var model_transform = identity();
 
-            // model_transform = this.drawBee(model_transform, graphics_state);
+            // model_transform = this.drawStaircase(model_transform, graphics_state);
             // model_transform = identity();
 
-            // model_transform = this.drawGround(model_transform, graphics_state);
+            // model_transform = this.drawGreedLanding(model_transform, graphics_state);
             // model_transform = identity();
 
-            model_transform = this.drawStaircase(model_transform, graphics_state, 0);
+             // model_transform = this.drawLustLanding(model_transform, graphics_state);
+            // model_transform = identity();
+
+            model_transform = this.drawEnvyLanding(model_transform, graphics_state, false);
             model_transform = identity();
 
-            // model_transform = this.drawTree(model_transform, graphics_state);
-            // model_transform = identity();
 
-            // model_transform = this.whatevs(model_transform, graphics_state);
-            // model_transform = identity();
       }
   }, Scene_Component );
 
